@@ -76,6 +76,9 @@ class HeModifiedNormalInitializer(tf.initializers.random_normal):
 
 
 def encoder(x, scales, depth, latent, scope):
+    # scales: the num of downscaled(avgpool) conv
+    # depth: the depth of conv layer(halved as layer goes deeper)
+    # latent: the size of latent code
     activation = tf.nn.leaky_relu
     conv_op = functools.partial(
         tf.layers.conv2d, padding='same',

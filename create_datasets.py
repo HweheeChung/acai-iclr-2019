@@ -138,6 +138,50 @@ def _load_mnist():
         splits[split] = {'images': _encode_png(images), 'labels': labels}
     return splits
 
+def _selective_load_mnist(idx=0):
+    def _load_mnist():
+        def _read32(data):
+            dt = np.dtype(np.uint32).newbyteorder('>')
+            return np.frombuffer(data.read(4), dtype=dt)[0]
+
+        image_filename = '{}-images-idx3-ubyte'
+        label_filename = '{}-labels-idx1-ubyte'
+        split_files = collections.OrderedDict(
+            [('train', 'train'), ('test', 't10k')])
+        splits = collections.OrderedDict()
+        for split, split_file in split_files.items():
+            with tempfile.NamedTemporaryFile() as f:
+                urllib.urlretrieve(
+                    URLS['mnist'].format(image_filename.format(split_file)),
+                    f.name)
+                with gzip.GzipFile(fileobj=f, mode='r') as data:
+                    assert _read32(data) == 2051
+                    n_images = _read32(data)
+                    row = _read32(data)
+                    col = _read32(data)
+                    images = np.frombuffer(
+                        data.read(n_images * row * col), dtype=np.uint8)
+                    images = images.reshape((n_images, row, col, 1))
+            with tempfile.NamedTemporaryFile() as f:
+                urllib.urlretrieve(
+                    URLS['mnist'].format(label_filename.format(split_file)),
+                    f.name)
+                with gzip.GzipFile(fileobj=f, mode='r') as data:
+                    assert _read32(data) == 2049
+                    n_labels = _read32(data)
+                    labels = np.frombuffer(data.read(n_labels), dtype=np.uint8)
+            if split == 'train':
+                indices = np.equal(labels, idx)
+                images = images[indices]
+                labels = labels[indices]
+            if split == 'test':
+                indices = np.not_equal(labels, idx)
+                images = images[indices]
+                labels = labels[indices]
+            splits[split] = {'images': _encode_png(images), 'labels': labels}
+        return splits
+    return _load_mnist
+
 
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
@@ -159,12 +203,20 @@ def _save_as_tfrecord(data, filename):
             writer.write(record.SerializeToString())
 
 
-LOADERS = [
-    ('mnist', _load_mnist),
-    ('cifar10', _load_cifar10),
-    ('svhn', _load_svhn),
-    ('celeba', _load_celeba)
-]
+#LOADERS = [
+#    ('mnist', _load_mnist),
+#    ('cifar10', _load_cifar10),
+#    ('svhn', _load_svhn),
+#    ('celeba', _load_celeba)
+#]
+#LOADERS = [
+#    ('mnist', _load_mnist),
+##    ('cifar10', _load_cifar10),
+##    ('svhn', _load_svhn),
+##    ('celeba', _load_celeba)
+#]
+
+LOADERS = [('mnist_{}'.format(idx), _selective_load_mnist(idx)) for idx in range(10)]
 
 if __name__ == '__main__':
     try:

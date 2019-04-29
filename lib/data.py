@@ -233,6 +233,8 @@ _NCLASS = {
     'lines32': 10,
     'mnist32': 10,
     'svhn32': 10,
+    'mnist0': 10,
+    'mnist1': 10,
 }
 
 _DATASETS = {
@@ -334,4 +336,40 @@ _DATASETS = {
     'lines32_train': functools.partial(input_lines, size=(32, 32, 1)),
     'lines32_test': functools.partial(input_lines, limit=5000,
                                          size=(32, 32, 1)),
+    'mnist0_train':
+        functools.partial(
+            input_fn_record,
+            _parser_all,
+            [os.path.join(DATA_DIR, 'mnist_0-train.tfrecord')],
+            size=(28, 28, 1),
+            pad=(2, 2),
+            resize=(32, 32)),
+    'mnist0_test':
+        functools.partial(
+            input_fn_record,
+            _parser_all,
+            [os.path.join(DATA_DIR, 'mnist_0-test.tfrecord')],
+            shuffle=False,
+            repeat=False,
+            size=(28, 28, 1),
+            pad=(2, 2),
+            resize=(32, 32)),
+    'mnist1_train':
+        functools.partial(
+            input_fn_record,
+            _parser_all,
+            [os.path.join(DATA_DIR, 'mnist_1-train.tfrecord')],
+            size=(28, 28, 1),
+            pad=(2, 2),
+            resize=(32, 32)),
+    'mnist1_test':
+        functools.partial(
+            input_fn_record,
+            _parser_all,
+            [os.path.join(DATA_DIR, 'mnist_1-test.tfrecord')],
+            shuffle=False,
+            repeat=False,
+            size=(28, 28, 1),
+            pad=(2, 2),
+            resize=(32, 32)),
 }

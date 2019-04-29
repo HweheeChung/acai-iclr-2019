@@ -31,7 +31,7 @@ python create_datasets.py
 ## Training
 ```bash
 CUDA_VISIBLE_DEVICES=0 python acai.py \
---train_dir=TEMP \
+--train_dir=EXP/ACAI \
 --latent=16 --latent_width=2 --depth=16 --dataset=celeba32
 ```
 

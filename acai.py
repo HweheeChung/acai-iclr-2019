@@ -35,12 +35,15 @@ FLAGS = flags.FLAGS
 class ACAI(train.AE):
 
     def model(self, latent, depth, scales, advweight, advdepth, reg):
+        # scale: the num of downscaled(avgpool) convolution layer
         x = tf.placeholder(tf.float32,
                            [None, self.height, self.width, self.colors], 'x')
         l = tf.placeholder(tf.float32, [None, self.nclass], 'label')
         h = tf.placeholder(
             tf.float32,
             [None, self.height >> scales, self.width >> scales, latent], 'h')
+        # place holder for decoder(w' x h' x latent)
+        # we need this because of the interpolated code
 
         def encoder(x):
             return layers.encoder(x, scales, depth, latent, 'ae_enc')
@@ -50,6 +53,9 @@ class ACAI(train.AE):
             return v
 
         def disc(x):
+            # similar shape to encoder
+            # last input is scalar(reduce mean of hidden layer) in order to map alpha
+            # FIXME: why dont sigmoid output
             return tf.reduce_mean(
                 layers.encoder(x, scales, advdepth, latent, 'disc'),
                 axis=[1, 2, 3])
@@ -61,7 +67,10 @@ class ACAI(train.AE):
 
         alpha = tf.random_uniform([tf.shape(encode)[0], 1, 1, 1], 0, 1)
         alpha = 0.5 - tf.abs(alpha - 0.5)  # Make interval [0, 0.5]
+        # FIXME: why dont alpha = tf.random_uniform([tf.shape(encode)[0], 1, 1, 1], 0, 0.5)
         encode_mix = alpha * encode + (1 - alpha) * encode[::-1]
+        # mix latent codes symmetrically
+        # e.g. l1 (+) l3 / l2 (+) l2 / l3 (+) l1
         decode_mix = decoder(encode_mix)
 
         loss_disc = tf.reduce_mean(
