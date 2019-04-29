@@ -2,7 +2,10 @@
 experiments
 temp.txt
 TEMP
+
+# custom
 EXP
+.env2
 
 # Idea
 *.iml
